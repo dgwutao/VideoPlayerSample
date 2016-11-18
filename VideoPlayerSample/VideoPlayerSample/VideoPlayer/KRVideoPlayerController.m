@@ -9,8 +9,7 @@
 #import "KRVideoPlayerController.h"
 #import "KRVideoPlayerControlView.h"
 
-
-@interface KRVideoPlayerController ()<UIGestureRecognizerDelegate>
+@interface KRVideoPlayerController ()
 {
     UIView *_videoView;
     bool _isFinished;
@@ -25,7 +24,8 @@
 @property (assign, nonatomic) BOOL isVolumeAdjust;
 @property (strong, nonatomic) UISlider *volumeViewSlider;
 @property (assign, nonatomic) BOOL isHorizontalMove;
-@property (nonatomic, assign) CGFloat sumTime;
+@property (nonatomic, assign) CGFloat currentTime;
+@property (nonatomic, assign) CGFloat lastSliderValue;
 @end
 
 @implementation KRVideoPlayerController
@@ -37,7 +37,7 @@
     
     _videoView = [[UIView alloc]initWithFrame:CGRectMake(0, ([UIScreen mainScreen].bounds.size.width - [UIScreen mainScreen].bounds.size.width * (9.0/16.0)) / 2 , [UIScreen mainScreen].bounds.size.width, [UIScreen mainScreen].bounds.size.width * (9.0/16.0))];
     _videoView.backgroundColor = [UIColor blackColor];
-
+    
     AVPlayerItem *playerItem = [AVPlayerItem playerItemWithURL:self.videoUrl];
     _player = [AVPlayer playerWithPlayerItem:playerItem];
     self.playerLayer = [AVPlayerLayer playerLayerWithPlayer:_player];
@@ -59,7 +59,6 @@
     [_videoView addSubview:self.videoControl];
     
     UIPanGestureRecognizer *pan = [[UIPanGestureRecognizer alloc]initWithTarget:self action:@selector(panDirection:)];
-    pan.delegate = self;
     [self.videoControl addGestureRecognizer:pan];
     
     [self addObserverAndNotification:playerItem];
@@ -175,7 +174,7 @@
             }
             case AVPlayerItemStatusFailed:
             {
-
+                
                 break;
             }
             case AVPlayerItemStatusUnknown:
@@ -186,7 +185,7 @@
     }else if([keyPath isEqualToString:@"loadedTimeRanges"]){
         NSArray *array = playerItem.loadedTimeRanges;
         CMTimeRange timeRange = [array.firstObject CMTimeRangeValue];
-//        float startSeconds = CMTimeGetSeconds(timeRange.start);
+        //        float startSeconds = CMTimeGetSeconds(timeRange.start);
         CGFloat durationSeconds = CMTimeGetSeconds(timeRange.duration);
         if (_isStalled && durationSeconds > 2.0f) {
             _isStalled = NO;
@@ -283,20 +282,16 @@
     }
 }
 
-- (void)progressSliderTouchBegan:(UISlider *)slider {
-    self.sumTime = self.videoControl.progressSlider.value;
+- (void)progressSliderValueChanged:(UISlider *)slider {
     [self pause];
     self.videoControl.replayButton.hidden = YES;
     [self.videoControl cancelAutoFadeOutControlBar];
+    [self sliderMove:slider.value];
 }
 
 - (void)progressSliderTouchEnded:(UISlider *)slider {
     [self play];
     [self.videoControl autoFadeOutControlBar];
-}
-
-- (void)progressSliderValueChanged:(UISlider *)slider {
-    [self horizontalMove:slider.value];
 }
 
 - (void)setTimeLabelValues:(double)currentTime totalTime:(double)totalTime {
@@ -326,7 +321,6 @@
     [self.videoControl.fullScreenButton addTarget:self action:@selector(fullScreenButtonClick) forControlEvents:UIControlEventTouchUpInside];
     [self.videoControl.shrinkScreenButton addTarget:self action:@selector(shrinkScreenButtonClick) forControlEvents:UIControlEventTouchUpInside];
     [self.videoControl.progressSlider addTarget:self action:@selector(progressSliderValueChanged:) forControlEvents:UIControlEventValueChanged];
-    [self.videoControl.progressSlider addTarget:self action:@selector(progressSliderTouchBegan:) forControlEvents:UIControlEventTouchDown];
     [self.videoControl.progressSlider addTarget:self action:@selector(progressSliderTouchEnded:) forControlEvents:UIControlEventTouchUpInside];
     [self.videoControl.progressSlider addTarget:self action:@selector(progressSliderTouchEnded:) forControlEvents:UIControlEventTouchUpOutside];
     [self.videoControl.replayButton addTarget:self action:@selector(replayVideo:) forControlEvents:UIControlEventTouchUpInside];
@@ -343,14 +337,14 @@
             CGFloat y = fabs(veloctyPoint.y);
             if (x > y) {
                 self.isHorizontalMove = YES;
-                self.sumTime = self.videoControl.progressSlider.value;
+                self.currentTime = self.videoControl.progressSlider.value;
                 [self pause];
                 self.videoControl.replayButton.hidden = YES;
             } else if (x < y) {
                 self.isHorizontalMove = NO;
                 if (locationPoint.x > _videoView.frame.size.width / 2) {
                     self.isVolumeAdjust = YES;
-                } else { 
+                } else {
                     self.isVolumeAdjust = NO;
                 }
             }
@@ -378,19 +372,19 @@
 
 - (void)horizontalMove:(CGFloat)value
 {
-    self.sumTime += value / 1000;
+    self.currentTime += value / 1000;
     CGFloat total = floor(CMTimeGetSeconds(self.player.currentItem.duration));
-    if (self.sumTime > total) {
-        self.sumTime = total;
-    } else if (self.sumTime < 0) {
-        self.sumTime = 0;
+    if (self.currentTime > total) {
+        self.currentTime = total;
+    } else if (self.currentTime < 0) {
+        self.currentTime = 0;
     }
-
-    double currentTime = self.sumTime;
-    double totalTime = total;
+    
+    CGFloat currentTime = self.currentTime;
+    CGFloat totalTime = total;
     [self setTimeLabelValues:currentTime totalTime:totalTime];
     self.videoControl.timeIndicatorView.labelText = self.videoControl.timeLabel.text;
-    self.videoControl.progressSlider.value = self.sumTime;
+    self.videoControl.progressSlider.value = self.currentTime;
     CMTime dragedCMTime = CMTimeMake(self.videoControl.progressSlider.value, 1);
     [self.player.currentItem seekToTime:dragedCMTime];
     KRTimeIndicatorPlayState playState;
@@ -400,13 +394,36 @@
         playState = KRTimeIndicatorPlayStateFastForward;
     }
     if (self.videoControl.timeIndicatorView.playState != playState) {
-        if (value < 0) {
-            self.videoControl.timeIndicatorView.playState = KRTimeIndicatorPlayStateRewind;
-            [self.videoControl.timeIndicatorView setNeedsLayout];
-        } else if (value > 0) {
-            self.videoControl.timeIndicatorView.playState = KRTimeIndicatorPlayStateFastForward;
-            [self.videoControl.timeIndicatorView setNeedsLayout];
-        }
+        self.videoControl.timeIndicatorView.playState = KRTimeIndicatorPlayStateFastForward;
+        [self.videoControl.timeIndicatorView setNeedsLayout];
+    }
+}
+
+- (void)sliderMove:(CGFloat)value
+{
+    CGFloat total = floor(CMTimeGetSeconds(self.player.currentItem.duration));
+    if (value > total) {
+        value = total;
+    } else if (value < 0) {
+        value = 0;
+    }
+    
+    CGFloat currentTime = value;
+    CGFloat totalTime = total;
+    [self setTimeLabelValues:currentTime totalTime:totalTime];
+    self.videoControl.timeIndicatorView.labelText = self.videoControl.timeLabel.text;
+    CMTime dragedCMTime = CMTimeMake(value, 1.0);
+    [self.player.currentItem seekToTime:dragedCMTime];
+    KRTimeIndicatorPlayState playState;
+    if (value < self.lastSliderValue) {
+        playState = KRTimeIndicatorPlayStateRewind;
+    } else if (value > self.lastSliderValue) {
+        playState = KRTimeIndicatorPlayStateFastForward;
+    }
+    self.lastSliderValue = value;
+    if (self.videoControl.timeIndicatorView.playState != playState) {
+        self.videoControl.timeIndicatorView.playState = playState;
+        [self.videoControl.timeIndicatorView setNeedsLayout];
     }
 }
 
@@ -452,11 +469,11 @@
         case AVAudioSessionRouteChangeReasonOldDeviceUnavailable: {
             NSLog(@"---耳机拔出");
             [self play];
-        
+            
             break;
         }
         case AVAudioSessionRouteChangeReasonCategoryChange:
-
+            
             break;
             
         default:
