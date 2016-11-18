@@ -1,0 +1,6 @@
+#Xcode build
+/Build
+/DerivedData
+
+#svn
+/.svn
