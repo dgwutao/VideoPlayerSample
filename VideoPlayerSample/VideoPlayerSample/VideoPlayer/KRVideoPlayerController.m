@@ -9,6 +9,7 @@
 #import "KRVideoPlayerController.h"
 #import "KRVideoPlayerControlView.h"
 
+
 @interface KRVideoPlayerController ()<UIGestureRecognizerDelegate>
 {
     UIView *_videoView;

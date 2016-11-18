@@ -269,7 +269,7 @@ static const CGFloat kVideoControlBarAutoFadeOutTimeInterval = 3.0;
     if (!_replayButton) {
         _replayButton = [UIButton buttonWithType:UIButtonTypeCustom];
         _replayButton.hidden = YES;
-        [_replayButton setImage:[UIImage imageNamed:@"ic_find_video"] forState:UIControlStateNormal];
+        [_replayButton setImage:[UIImage imageNamed:@"kr-video-player-replay"] forState:UIControlStateNormal];
     }
     return _replayButton;
 }

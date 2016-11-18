@@ -5,6 +5,7 @@
 //  Created by aidenluo on 5/23/17.
 //  Copyright (c) 2017 axel. All rights reserved.
 //
+#import <AVFoundation/AVFoundation.h>
 
 @import MediaPlayer;
 

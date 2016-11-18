@@ -43,7 +43,6 @@
 		B77A5A391DDEADCB0032B0C1 /* KRVideoPlayerVolumeView.m in Sources */ = {isa = PBXBuildFile; fileRef = B77A5A1D1DDEADCB0032B0C1 /* KRVideoPlayerVolumeView.m */; };
 		B77A5A3B1DDEADEC0032B0C1 /* 150511_JiveBike.mov in Resources */ = {isa = PBXBuildFile; fileRef = B77A5A3A1DDEADEC0032B0C1 /* 150511_JiveBike.mov */; };
 		B77A5A3E1DDEAEB60032B0C1 /* AVFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B77A5A3D1DDEAEB60032B0C1 /* AVFoundation.framework */; };
-		B77A5A421DDEAF7F0032B0C1 /* CoreGraphics.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B77A5A411DDEAF7F0032B0C1 /* CoreGraphics.framework */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -101,7 +100,6 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				B77A5A421DDEAF7F0032B0C1 /* CoreGraphics.framework in Frameworks */,
 				B77A5A3E1DDEAEB60032B0C1 /* AVFoundation.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -469,6 +467,7 @@
 				B77A59FA1DDEADA20032B0C1 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};
