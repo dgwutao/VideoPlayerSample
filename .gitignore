@@ -1,6 +1,6 @@
 #Xcode build
-/Build
-/DerivedData
+/VideoPlayerSample/Build
+/VideoPlayerSample/DerivedData
 
 #svn
-/.svn
+/VideoPlayerSample/.svn
